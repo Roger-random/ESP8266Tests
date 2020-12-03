@@ -25,11 +25,37 @@ ESP8266WiFiMulti wifiMulti;
 //  Central Europe: "CET-1CEST,M3.5.0,M10.5.0/3"
 #define TZ_INFO "PST8PDT"
 
+// We do something once every WAIT_MILLIS milliseconds.
+#define WAIT_MILLIS 1000
+
+// Timer value of last action
+unsigned long lastMillis;
+
+// Numerator:
+//  100 kOhm resistor between ESP8266 A0 and GND
+//  220 kOhm resistor between board A0 pin and ESP8266 A0.
+//  2 * 1 MOhm resistor between input source and board A0 pin
+//  Total resistance = 23.2 MOhm
+// Denominator:
+//  ADC measures 0 to 1V in 10-bit precision.
+//  2^10 = 1024 = 1 Volt
+#define VOLTAGE_DIVIDER_FACTOR 23.2 / 1024
+
+// VOLTAGE_DIVIDER_FACTOR is the theoretical value. In practice, resistances
+// vary. This correction factor is calculated by comparing against value
+// reported by a Fluke voltmeter.
+#define CORRECTION_FACTOR 0.96
+
+// Aggregrate ADC values
+#define ADC_SAMPLES 9
+unsigned int adcCount;
+unsigned int adcSum;
+
 // InfluxDB client instance with preconfigured InfluxCloud certificate
 InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN, InfluxDbCloud2CACert);
 
 // Data point
-Point sensor("wifi_status");
+Point sensor("voltage");
 
 void setup() {
   Serial.begin(115200);
@@ -46,8 +72,7 @@ void setup() {
   Serial.println();
 
   // Add tags
-  sensor.addTag("device", DEVICE);
-  sensor.addTag("SSID", WiFi.SSID());
+  sensor.addTag("type", "ADC0");
   sensor.addTag("MAC", WiFi.macAddress());
 
   // Accurate time is necessary for certificate validation and writing in batches
@@ -63,32 +88,67 @@ void setup() {
     Serial.print("InfluxDB connection failed: ");
     Serial.println(client.getLastErrorMessage());
   }
+
+  // Prepare for analog multi-sampling
+  adcCount = 0;
+  adcSum = 0;
+
+  // Start the clock for loop() code.
+  lastMillis = millis();
 }
 
 void loop() {
-  // Clear fields for reusing the point. Tags will remain untouched
-  sensor.clearFields();
+  unsigned long loopMillis = millis();
 
-  // Store measured value into point
-  // Report RSSI of currently connected network
-  sensor.addField("rssi", WiFi.RSSI());
+  if (loopMillis < lastMillis) {
+    Serial.println("millis() wraparound detected.");
 
-  // Print what are we exactly writing
-  Serial.print("Writing: ");
-  Serial.println(sensor.toLineProtocol());
-
-  // If no Wifi signal, try to reconnect it
-  if ((WiFi.RSSI() == 0) && (wifiMulti.run() != WL_CONNECTED)) {
-    Serial.println("Wifi connection lost");
+    // If precision is important, we can do math about ULONG_MAX-lastMillis + loopMillis and compare.
+    // But if we don't, we can just skip a loop.
+    lastMillis = loopMillis;
   }
+  else if (loopMillis-lastMillis > WAIT_MILLIS)
+  {
+    // We read ADC through ADC_SAMPLES*WAIT_MILLIS loops, then submit data on the tenth.
+    // The period between reported datapoints are thus (ADC_SAMPLES+1) * WAIT_MILLIS.
+    if (adcCount < ADC_SAMPLES)
+    {
+      adcSum += analogRead(A0);
+      adcCount++;
+    }
+    else
+    {
+      // Clear fields for reusing the point. Tags will remain untouched
+      sensor.clearFields();
 
-  // Write point
-  if (!client.writePoint(sensor)) {
-    Serial.print("InfluxDB write failed: ");
-    Serial.println(client.getLastErrorMessage());
+      // Divide accumulated value by number of samples to get average value.
+      int average = adcSum/ADC_SAMPLES;
+      sensor.addField("raw", average);
+
+      // See comments for VOLTAGE_DIVIDER_FACTOR and CORRECTION_FACTOR for details on
+      // how this translates the average ADC value into average voltage.
+      sensor.addField("V", average * VOLTAGE_DIVIDER_FACTOR * CORRECTION_FACTOR);
+
+      // Print what are we exactly writing
+      Serial.print("Writing: ");
+      Serial.println(client.pointToLineProtocol(sensor));
+
+      // If no Wifi signal, try to reconnect it
+      if ((WiFi.RSSI() == 0) && (wifiMulti.run() != WL_CONNECTED)) {
+        Serial.println("Wifi connection lost");
+      }
+
+      // Write point
+      if (!client.writePoint(sensor)) {
+        Serial.print("InfluxDB write failed: ");
+        Serial.println(client.getLastErrorMessage());
+      }
+
+      // Reset for next set of multisampling.
+      adcCount = 0;
+      adcSum = 0;
+    }
+
+    lastMillis = loopMillis;
   }
-
-  //Wait 1s
-  Serial.println("Wait 1s");
-  delay(1000);
 }
