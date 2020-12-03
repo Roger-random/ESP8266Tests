@@ -1,9 +1,24 @@
 #include <Arduino.h>
 
+const int ledPin = LED_BUILTIN;
+
 void setup() {
-  // put your setup code here, to run once:
+  // initialize digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // increase the LED brightness
+  for(int dutyCycle = 0; dutyCycle < 1023; dutyCycle++){
+    // changing the LED brightness with PWM
+    analogWrite(ledPin, dutyCycle);
+    delay(1);
+  }
+
+  // decrease the LED brightness
+  for(int dutyCycle = 1023; dutyCycle > 0; dutyCycle--){
+    // changing the LED brightness with PWM
+    analogWrite(ledPin, dutyCycle);
+    delay(1);
+  }
 }
