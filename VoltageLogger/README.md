@@ -7,6 +7,10 @@ server.
 This project uses the Arduino library for ESP8266 via PlatformIO extension
 for Visual Studio Code.
 
+InfluxDB interaction was made easy with the
+[InfluxDB Arduino Client](https://github.com/tobiasschuerg/InfluxDB-Client-for-Arduino)
+by Tobias Schürg
+
 Application-specific secrets like WiFI and Database information are in the
 header file template ```secrets.h```. Once filled in, run
 ```git update-index --skip-worktree secrets.h``` to make sure access
