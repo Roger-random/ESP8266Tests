@@ -35,7 +35,7 @@ unsigned long lastMillis;
 //  100 kOhm resistor between ESP8266 A0 and GND
 //  220 kOhm resistor between board A0 pin and ESP8266 A0.
 //  2 * 1 MOhm resistor between input source and board A0 pin
-//  Total resistance = 23.2 MOhm
+//  Total resistance = 2.32 MOhm, 100 kOhm between ESP8266 A0 and GND = 23.2 multiplier.
 // Denominator:
 //  ADC measures 0 to 1V in 10-bit precision.
 //  2^10 = 1024 = 1 Volt
