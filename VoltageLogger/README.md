@@ -14,7 +14,9 @@ by Tobias Schürg
 Application-specific secrets like WiFI and Database information are in the
 header file template ```secrets.h```. Once filled in, run
 ```git update-index --skip-worktree secrets.h``` to make sure access
-information is not accidentally submitted to GitHub.
+information is not accidentally submitted to GitHub. Thanks to
+[this StackOverflow thread](https://stackoverflow.com/questions/1274057/how-to-make-git-forget-about-a-file-that-was-tracked-but-is-now-in-gitignore)
+for the technique.
 
 Here is
 [an Amazon affiliate link](https://amzn.to/2JFcuxw)
