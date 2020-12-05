@@ -26,7 +26,7 @@ ESP8266WiFiMulti wifiMulti;
 #define TZ_INFO "PST8PDT"
 
 // We do something once every WAIT_MILLIS milliseconds.
-#define WAIT_MILLIS 1000
+#define WAIT_MILLIS 6000
 
 // Timer value of last action
 unsigned long lastMillis;
