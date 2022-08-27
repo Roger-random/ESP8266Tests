@@ -47,24 +47,24 @@ volatile int evenOdd;
 // Configure IO pins and attach interrupt handler
 void setup() {
   // Attach interrupt handler to fan tachometer wire. Make sure this pin supports interrupts.
+  // If the microcontroller does not have internal pullup resistor, wire up an external pull-up
+  // resistor. (1000 Ohm should suffice.)
   evenOdd = 0;
   pinMode(12, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(12), tach_pulse_handler, RISING);
 
-  // Configure LED power control and turn it off.
+  // Configure LED power control and turn it off at startup.
   pinMode(13, OUTPUT);
   digitalWrite(13, LOW);
   
-  // Configure fan power control and turn it on.
+  // Configure fan power control and turn it on at startup.
+  // Can delete if fan is hard wired to always run whenever there's power.
   pinMode(14, OUTPUT);
   digitalWrite(14, HIGH);
 }
 
 // Loop function executes repeatedly, typically once every mid-teens of milliseconds but not guaranteed.
 void loop() {
-  // Turn off the strobe LED which may or may not have been turned on by the
-  // tachometer pulse interrupt handler.
-  digitalWrite(13, LOW);
 }
 
 // IRAM_ATTR prefix is required specifically for ESP8266 interrupt handlers.
@@ -74,20 +74,27 @@ void loop() {
 // documentation for details on interrupt handlers.
 IRAM_ATTR void tach_pulse_handler() {
   if (0 == evenOdd) {
-    // Ignore every other pulse
+    // Tachometer wire pulses twice per revolution, so every other pulse is ignored.
     evenOdd = 1;
   } else {
-    // Illuminate the LED
+    // Illuminate LED
     digitalWrite(13, HIGH);
 
     // Do not use delay() in an interrupt handler, but delayMicroseconds()
-    // is usually OK. Shorter times will result in dimmer illumination, longer
-    // times will result in motion blur. The ideal delay will depend on fan RPM,
+    // is usually OK as long as we don't delay too long. Preferably keeping
+    // the delay well under 1000. (1000 microsecond = 1 millisecond.) Delay
+    // longer and we risk interfering with other background tasks such as
+    // analogWrite() PWM, ESP8266 WiFi, and utilities like millis().
+    // Shorter times will result in dimmer illumination, longer times will
+    // result in motion blur. The ideal delay will depend on fan RPM,
     // response time of LED circuit (including LED themselves), and ambient
-    // light. It is possible the ideal delay is none at all (delete this line.)
+    // light.
     delayMicroseconds(200);
 
-    // Ignore next pulse
+    // After the short delay, turn off LED
+    digitalWrite(13, LOW);
+
+    // Tachometer wire pulses twice per revolution, so ignore next pulse.
     evenOdd = 0;
   }
 }
