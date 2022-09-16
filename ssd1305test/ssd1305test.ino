@@ -22,20 +22,20 @@ All text above, and the splash screen below must be included in any redistributi
 #include <Adafruit_SSD1305.h>
 
 // Used for software SPI
-#define OLED_CLK 13
-#define OLED_MOSI 11
+#define OLED_CLK 14
+#define OLED_MOSI 13
 
 // Used for software or hardware SPI
-#define OLED_CS 10
-#define OLED_DC 8
+#define OLED_CS 15
+#define OLED_DC 4
 
 // Used for I2C or SPI
-#define OLED_RESET 9
+#define OLED_RESET 5
 
 // software SPI
 //Adafruit_SSD1305 display(128, 64, OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 // hardware SPI - use 7Mhz (7000000UL) or lower because the screen is rated for 4MHz, or it will remain blank!
-Adafruit_SSD1305 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS, 7000000UL);
+Adafruit_SSD1305 display(128, 32, &SPI, OLED_DC, OLED_RESET, OLED_CS, 7000000UL);
 
 // I2C
 //Adafruit_SSD1305 display(128, 64, &Wire, OLED_RESET);
