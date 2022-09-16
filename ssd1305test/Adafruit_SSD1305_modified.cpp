@@ -225,7 +225,7 @@ bool Adafruit_SSD1305::begin(uint8_t addr, bool reset) {
 
   if (HEIGHT == 32) {
     page_offset = 4;
-    column_offset = 4;
+    // Not sure why this is here? column_offset = 4;
     if (!oled_commandList(init_128x32, sizeof(init_128x32))) {
       return false;
     }
