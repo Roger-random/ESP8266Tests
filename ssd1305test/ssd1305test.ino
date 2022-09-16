@@ -158,6 +158,13 @@ void setup()   {
   }
 
   display.setRotation(0);
+
+  // Full screen white for 3 seconds
+  display.clearDisplay();
+  display.display();
+  display.invertDisplay(true);
+  delay(3000);
+  display.invertDisplay(false);
   
   // miniature bitmap display
   display.clearDisplay();
