@@ -22,7 +22,7 @@ const char * hostName = "pio-webserver";
 void setup(){
   Serial.begin(115200);
   Serial.setDebugOutput(true);
-  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.printf("STA: Failed!\n");
@@ -46,5 +46,8 @@ void setup(){
 }
 
 void loop(){
+#ifdef ESP8266
+  // Required for ESP8266 but absent from ESP32 mDNS library
   MDNS.update();
+#endif
 }
