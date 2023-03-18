@@ -39,8 +39,9 @@ void setup(){
   server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html");
 
   server.onNotFound([](AsyncWebServerRequest *request){
-    request->send(404);
+    request->send(LittleFS, "/www/index.html");
   });
+
   server.begin();
 }
 
