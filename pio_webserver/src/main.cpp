@@ -10,6 +10,7 @@
 #include <ESP8266mDNS.h>
 #endif
 
+#include <LittleFS.h>
 #include <ESPAsyncWebServer.h>
 
 #include <secrets.h>
@@ -33,9 +34,9 @@ void setup(){
   MDNS.begin(hostName);
   MDNS.addService("http","tcp",80);
 
-  SPIFFS.begin();
+  LittleFS.begin();
 
-  server.serveStatic("/", SPIFFS, "/www/").setDefaultFile("index.html");
+  server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html");
 
   server.onNotFound([](AsyncWebServerRequest *request){
     request->send(404);
